@@ -8,19 +8,19 @@ import os
 # Page configuration
 st.set_page_config(page_title="DeepFake Detector", layout="centered")
 
-# Custom CSS with styling and left-to-right animation
+# Custom CSS with updated background and styling
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Open+Sans&display=swap');
 
         body {
-            background-image: url('https://images.unsplash.com/photo-1593642634367-d91a135587b5?auto=format&fit=crop&w=1950&q=80');
+            background-image: url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1950&q=80');
             background-size: cover;
             background-attachment: fixed;
         }
 
         .stApp {
-            background-color: rgba(0, 0, 0, 0.6);
+            background-color: rgba(0, 0, 0, 0.65);
             padding: 2rem;
             border-radius: 12px;
         }
@@ -68,17 +68,17 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Clickable, relevant AI logo
+# New deepfake-relevant logo image (clickable)
 st.markdown("""
 <a href="https://www.intel.com/content/www/us/en/research/fakecatcher.html" target="_blank">
-    <img src="https://cdn-icons-png.flaticon.com/512/10471/10471465.png" width="100">
+    <img src="https://cdn-icons-png.flaticon.com/512/10778/10778298.png" width="100">
 </a>
 """, unsafe_allow_html=True)
 
 # Title
 st.title("Real-Time DeepFake Detection in Social Media Videos")
 
-# Animated description with new text
+# Animated description with slide-in
 st.markdown("""
 <div class='animated-desc'>
 Analyze your video content for potential deepfake alterations using cutting-edge frame-by-frame AI detection.
