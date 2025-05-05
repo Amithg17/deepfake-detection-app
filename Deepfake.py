@@ -14,7 +14,7 @@ st.markdown("""
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Open+Sans&display=swap');
 
         body {
-            background-image: url('https://stock.adobe.com/id/images/deepfake-deep-face-technology-concept-vector-illustration/321513977');
+            background-image: url('https://tse4.mm.bing.net/th?id=OIP.09akxLgNqa54jsc7RWLsEAHaEK&pid=Api');
             background-size: cover;
             background-attachment: fixed;
         }
@@ -68,10 +68,10 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Evil robot logo
+# Clickable deepfake matrix logo (3rd image)
 st.markdown("""
-<a href="https://www.dreamstime.com/evil-robot-head-logo-symbol-clan-race-community-evil-robot-head-symbol-image103068673" target="_blank">
-    <img src="https://www.dreamstime.com/evil-robot-head-logo-symbol-clan-race-community-evil-robot-head-symbol-image103068673" width="100">
+<a href="https://www.intel.com/content/www/us/en/research/fakecatcher.html" target="_blank">
+    <img src="https://tse4.mm.bing.net/th?id=OIP.woZH_WacSJ4NnZyF8ugNCAHaEK&pid=Api" width="120">
 </a>
 """, unsafe_allow_html=True)
 
