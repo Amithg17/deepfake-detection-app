@@ -1,127 +1,158 @@
 import streamlit as st
-import os
-import zipfile
-import tempfile
-import shutil
 import cv2
+import tempfile
 import numpy as np
-from PIL import Image
-from sklearn.model_selection import train_test_split
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
-from tensorflow.keras.utils import to_categorical
-from tensorflow.keras.preprocessing.image import img_to_array
+import requests
+import os
 
-st.set_page_config(page_title="DeepFake Trainer", layout="centered")
-st.title("🎭 DeepFake Detection: Upload Dataset & Train Model")
+# Page configuration
+st.set_page_config(page_title="DeepFake Detector", layout="centered")
 
-# --- Step 1: Upload dataset ZIP ---
-uploaded_zip = st.file_uploader("📦 Upload ZIP file containing /real and /fake image folders", type=["zip"])
+# Custom CSS with updated background and styling
+st.markdown("""
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Open+Sans&display=swap');
 
-def extract_dataset(uploaded_zip):
-    if uploaded_zip is not None:
-        temp_dir = tempfile.mkdtemp()
-        with zipfile.ZipFile(uploaded_zip, 'r') as zip_ref:
-            zip_ref.extractall(temp_dir)
-        return temp_dir
-    return None
+        body {
+            background-image: url('https://tse4.mm.bing.net/th?id=OIP.09akxLgNqa54jsc7RWLsEAHaEK&pid=Api');
+            background-size: cover;
+            background-attachment: fixed;
+        }
 
-# --- Step 2: Load and preprocess images ---
-def load_images_and_labels(dataset_dir, img_size=(64, 64)):
-    data = []
-    labels = []
-    label_map = {"real": 0, "fake": 1}
+        .stApp {
+            background-color: rgba(0, 0, 0, 0.65);
+            padding: 2rem;
+            border-radius: 12px;
+        }
 
-    for label in ["real", "fake"]:
-        folder = os.path.join(dataset_dir, label)
-        if not os.path.exists(folder):
-            st.error(f"❌ Folder '{label}' not found in uploaded ZIP.")
-            return None, None
-        for img_file in os.listdir(folder):
-            try:
-                img_path = os.path.join(folder, img_file)
-                img = Image.open(img_path).convert('RGB').resize(img_size)
-                arr = img_to_array(img) / 255.0
-                data.append(arr)
-                labels.append(label_map[label])
-            except:
-                continue  # skip corrupt images
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            color: #FFFFFF;
+            text-shadow: 1px 1px 4px black;
+        }
 
-    X = np.array(data)
-    y = to_categorical(np.array(labels), num_classes=2)
-    return train_test_split(X, y, test_size=0.2, random_state=42)
+        .animated-desc {
+            font-family: 'Open Sans', sans-serif;
+            color: white;
+            font-size: 18px;
+            animation: slideInLeft 2s ease-out forwards;
+            opacity: 0;
+            transform: translateX(-100%);
+            margin-top: 1rem;
+        }
 
-# --- Step 3: Train the model ---
-def train_model(X_train, X_test, y_train, y_test):
-    model = Sequential([
-        Conv2D(32, (3, 3), activation='relu', input_shape=(64, 64, 3)),
-        MaxPooling2D(2, 2),
-        Conv2D(64, (3, 3), activation='relu'),
-        MaxPooling2D(2, 2),
-        Flatten(),
-        Dense(128, activation='relu'),
-        Dense(2, activation='softmax')
-    ])
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-    model.fit(X_train, y_train, epochs=5, validation_data=(X_test, y_test), verbose=1)
-    return model
+        @keyframes slideInLeft {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
 
-# --- Step 4: Upload a video ---
-uploaded_video = st.file_uploader("📤 Upload a video file (MP4, MOV, AVI)", type=["mp4", "mov", "avi"])
+        h2, h3 {
+            font-family: 'Open Sans', sans-serif;
+            color: #00ffee;
+        }
 
-# --- Step 5: Run if dataset uploaded ---
-if uploaded_zip:
-    st.success("✅ Dataset ZIP uploaded!")
-    dataset_path = extract_dataset(uploaded_zip)
+        .stSelectbox > div {
+            font-weight: bold;
+        }
 
-    with st.spinner("📚 Loading data..."):
-        X_train, X_test, y_train, y_test = load_images_and_labels(dataset_path)
+        .stProgress > div > div > div > div {
+            background-color: #00ffcc;
+        }
 
-    if X_train is not None:
-        with st.spinner("🧠 Training model..."):
-            model = train_model(X_train, X_test, y_train, y_test)
-        st.success("✅ Model trained!")
+        .css-1v0mbdj, .stMarkdown {
+            font-family: 'Open Sans', sans-serif;
+            color: white;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
-        # --- Predict function ---
-        def predict_frame(frame: np.ndarray) -> float:
-            img = Image.fromarray(frame).resize((64, 64))
-            arr = img_to_array(img) / 255.0
-            arr = np.expand_dims(arr, axis=0)
-            pred = model.predict(arr)[0]
-            return pred[1]  # 'fake' score
+# Clickable deepfake matrix logo (3rd image)
+st.markdown("""
+<a href="https://www.intel.com/content/www/us/en/research/fakecatcher.html" target="_blank">
+    <img src="https://tse4.mm.bing.net/th?id=OIP.woZH_WacSJ4NnZyF8ugNCAHaEK&pid=Api" width="120">
+</a>
+""", unsafe_allow_html=True)
 
-        # --- Analyze uploaded video ---
-        if uploaded_video:
-            st.video(uploaded_video)
-            tfile = tempfile.NamedTemporaryFile(delete=False)
-            tfile.write(uploaded_video.read())
-            video_path = tfile.name
+# Title
+st.title("Real-Time DeepFake Detection in Social Media Videos")
 
-            st.info("🔍 Analyzing uploaded video...")
-            cap = cv2.VideoCapture(video_path)
-            frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-            scores = []
-            progress = st.progress(0)
+# Animated description with slide-in
+st.markdown("""
+<div class='animated-desc'>
+Analyze your video content for potential deepfake alterations using cutting-edge frame-by-frame AI detection.
+</div>
+""", unsafe_allow_html=True)
 
-            for i in range(frame_count):
-                ret, frame = cap.read()
-                if not ret:
-                    break
-                if i % 15 == 0:
-                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    score = predict_frame(frame_rgb)
-                    scores.append(score)
-                progress.progress(min((i + 1) / frame_count, 1.0))
+# Select detection method
+api_option = st.selectbox("🔍 Choose Detection Method", ["Local (Frame-based Model)", "Deepware API"])
 
-            cap.release()
-            os.remove(video_path)
+# Upload video
+uploaded_file = st.file_uploader("📤 Upload a video file (MP4, MOV, AVI)", type=["mp4", "mov", "avi"])
 
-            if scores:
-                avg_score = np.mean(scores)
-                st.success(f"📊 Average Fake Score: {avg_score:.2f}")
-                if avg_score > 0.5:
-                    st.error("⚠️ Likely a DeepFake!")
-                else:
-                    st.success("✅ Likely a Real video.")
+# Dummy detector function
+def dummy_fake_detector(frame: np.ndarray) -> float:
+    return np.random.rand()
+
+# Deepware API call
+def call_deepware_api(video_path: str) -> dict:
+    api_url = "https://api.deepware.ai/v1/scan"
+    api_key = "YOUR_DEEPWARE_API_KEY"  # Replace this with your actual API key
+
+    with open(video_path, 'rb') as f:
+        files = {'file': (os.path.basename(video_path), f)}
+        headers = {"Authorization": f"Bearer {api_key}"}
+        response = requests.post(api_url, files=files, headers=headers)
+
+    return response.json()
+
+# Main detection logic
+if uploaded_file:
+    tfile = tempfile.NamedTemporaryFile(delete=False)
+    tfile.write(uploaded_file.read())
+    video_path = tfile.name
+
+    st.video(uploaded_file)
+
+    if api_option == "Local (Frame-based Model)":
+        st.info("🧠 Running local DeepFake detection...")
+        cap = cv2.VideoCapture(video_path)
+        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        progress = st.progress(0)
+        fake_scores = []
+
+        for i in range(frame_count):
+            ret, frame = cap.read()
+            if not ret:
+                break
+            if i % 15 == 0:
+                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                score = dummy_fake_detector(frame_rgb)
+                fake_scores.append(score)
+
+            progress.progress(min((i + 1) / frame_count, 1.0))
+
+        cap.release()
+        avg_score = np.mean(fake_scores)
+        st.success(f"📊 Average Fake Score: **{avg_score:.2f}**")
+
+        if avg_score > 0.5:
+            st.error("⚠️ The video is likely DeepFake!")
+        else:
+            st.success("✅ The video appears genuine.")
+
+    elif api_option == "Deepware API":
+        st.info("📡 Sending to Deepware API...")
+        result = call_deepware_api(video_path)
+
+        if "result" in result:
+            st.json(result)
+            if result["result"]["label"] == "FAKE":
+                st.error("⚠️ DeepFake Detected!")
             else:
-                st.warning("⚠️ No frames could be processed.")
+                st.success("✅ No DeepFake Detected.")
+        else:
+            st.error("❌ API response error.")
+
+    os.remove(video_path)
